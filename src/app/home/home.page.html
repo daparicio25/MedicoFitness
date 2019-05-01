@@ -1,3 +1,7 @@
+<script src="lib/ngCordova/dist/ng-cordova.min.js"></script>
+<script src="lib/filelogger/dist/filelogger.min.js"></script>
+<script src="cordova.js"></script>
+
 <ion-header>
   <ion-toolbar>
     <ion-title>
@@ -8,5 +12,8 @@
 
 <ion-content>
   <h2>Hello Word</h2>
-  <ion-button color="primary" (click)="imprimir()">Imprimir</ion-button>
+  <ion-button color="primary" (click)="antMediciones()">Procesar Antiguas Mediciones</ion-button>
+  <ion-button color="primary" (click)="pesoDeseado()">Procesar Peso Deseado</ion-button>
+  <ion-button color="primary" (click)="descargar()">Descargar</ion-button>
+  <a href="#" id="link" download="contenido.txt" hidden>Descargar</a>
 </ion-content>

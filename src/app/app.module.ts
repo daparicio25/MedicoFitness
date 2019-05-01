@@ -15,6 +15,9 @@ import { AngularFirestoreModule } from 'angularfire2/firestore';
 import { Configuration } from './config/config';
 import { FirestoreSettingsToken} from '@angular/fire/firestore';
 
+//log
+import { File } from '@ionic-native/file/ngx';
+
 @NgModule({
   declarations: [AppComponent],
   entryComponents: [],
@@ -22,6 +25,7 @@ import { FirestoreSettingsToken} from '@angular/fire/firestore';
   providers: [
     StatusBar,
     SplashScreen,
+    File,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     { provide: FirestoreSettingsToken, useValue: {} }
   ],
