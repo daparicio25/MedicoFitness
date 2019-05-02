@@ -102,7 +102,7 @@ export class HomePage {
         let idDoc = this.fire.createId();
         this.data2 = this.newTarjet(idDoc, item["created_at"], item["uid"], "weight", item["weight"], item["weight_unity"])
 
-        this.fire.doc("/ejemplo/" + idDoc).set(this.data2);
+        this.fire.doc("/tarjetNewModel/" + idDoc).set(this.data2);
       } else {
         this.error++;
         console.log(this.error);
@@ -145,7 +145,7 @@ export class HomePage {
         let idDoc = this.fire.createId();
         this.data = this.newMedition(idDoc, item["created_at"], item["user_uid"], key, item[key], unit, item["medition_type"])
 
-        this.fire.doc("/prueba/" + idDoc).set(this.data);
+        this.fire.doc("/meditions/" + idDoc).set(this.data);
       }
     }
 
