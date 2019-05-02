@@ -14,7 +14,11 @@ export class HomePage {
   //Variables para Meditions
   array = [];
   data : meditionsNewModel;
-  dataSend: meditionsNewModel[] = [];
+  //Variables para peso ideal
+  data2: tarjetNewModel;
+  //Verificar si ya termino
+  cont: number = 0;
+  error: number = 0;
 
   constructor(private fire: AngularFirestore /*, public file: File*/) {
 
@@ -27,30 +31,37 @@ export class HomePage {
   }
 
   antMediciones() {
-    this.proceso()
-    .then(respuesta => this.imprimir())
+    this.cont = 0;
+    this.error = 0;
+
+    this.consulta("/meditions/")
+    .then(respuesta => this.iterar())
     .catch(error => console.log(error));
   }
 
-  proceso() {
+  pesoDeseado() {
+    this.cont = 0;
+    this.error = 0;
+
+    this.consulta("/users/")
+    .then(respuesta => this.iterar2())
+    .catch(error => console.log(error));
+  }
+
+  consulta(coleccion: string) {
     let promise = new Promise((resolve, reject) => {
-      var array = [];
-      var user_id = "0y4D63eHSZJGuZW8cmme";
-      console.log("user_id: " + user_id);
-
-      this.fire.collection<any>("/meditions/").doc(user_id).valueChanges().subscribe((data)=>{
-        console.log("* MEDITIONS *");
-        console.log(data);
-
+      this.fire.collection<any>(coleccion).valueChanges().subscribe((data)=>{
         if (data == undefined) {
           let error = new Error("Sin datos a procesar");
           reject(error);
         } else {
           var strObj = JSON.stringify(data);
           var objJson = JSON.parse(strObj);
-          array[0] = data;
-          this.array = array;
-          resolve(array);
+
+          //Descargar el archivo con los datos completos de una coleccion
+          this.descargar(JSON.stringify(data), coleccion.replace(/\//g, ""));
+          this.array = data;
+          resolve(data);
         }
 
       });
@@ -58,9 +69,12 @@ export class HomePage {
     return promise;
   }
 
-  imprimir() {
+  iterar() {
     let item;
     let unit = "";
+
+    console.log("Total de reg Meditions: " + this.array.length);
+
     for (var i=0; i<this.array.length; i++)
     {
       item = this.array[i];
@@ -71,22 +85,49 @@ export class HomePage {
     }
   }
 
+  iterar2() {
+    let item;
+    let unit = "";
+
+    console.log("Total de reg Users: " + this.array.length);
+
+    for (var i=0; i<this.array.length; i++)
+    {
+      item = this.array[i];
+
+      if (item["weight"] !== undefined && item["weight_unity"] !== undefined) {
+        this.cont++;
+        console.log(this.cont);
+
+        let idDoc = this.fire.createId();
+        this.data2 = this.newTarjet(idDoc, item["created_at"], item["uid"], "weight", item["weight"], item["weight_unity"])
+
+        this.fire.doc("/ejemplo/" + idDoc).set(this.data2);
+      } else {
+        this.error++;
+        console.log(this.error);
+      }
+    }
+
+    console.log("FINALZO USERS");
+    console.log(this.cont + " >> Registros exitosos");
+    console.log(this.error + " >> Registros no contienen medida o unidad de medida");
+  }
+
   getUnit = (user_id:string) => {
     let promise = new Promise((resolve, reject) => {
       let unit = "";
-      console.log("user_id: " + user_id);
 
       this.fire.collection<any>("/users/").doc(user_id).valueChanges().subscribe((data)=>{
-        console.log("* USUARIO *");
-
         if (data != undefined) {
-          console.log(data);
           var strObj = JSON.stringify(data);
           var objJson = JSON.parse(strObj);
           unit = objJson.weight_unity;
           resolve(unit);
         } else {
           let error = new Error("No existe el usuario: " + user_id);
+          this.error++;
+          console.log("ERROR: " + this.error);
           reject(error);
         }
       });
@@ -95,23 +136,28 @@ export class HomePage {
   }
 
   spliceData(item, unit) {
-    console.log("\n------------");
-    console.log("Unit: " + unit);
+    this.cont++;
 
     for (var key in item) {
       var arre = ["uid", "medition_type", "created_at", "user_uid"];
       if (arre.indexOf(key) == -1 && item[key] != null && item[key] != "0" && item[key] != "0.00") {
-        console.log(key + " --> " + item[key]);
+        //console.log(key + " --> " + item[key]);
         let idDoc = this.fire.createId();
-        this.data = this.nuevoDato(idDoc, item["created_at"], item["user_uid"], key, item[key], unit, item["medition_type"])
+        this.data = this.newMedition(idDoc, item["created_at"], item["user_uid"], key, item[key], unit, item["medition_type"])
 
-        //console.log(this.data);
         this.fire.doc("/prueba/" + idDoc).set(this.data);
       }
     }
+
+    console.log("CONT: " + this.cont);
+    if ((this.cont + this.error) == this.array.length) {
+      console.log("FINALIZO MEDITIONS");
+      console.log(this.cont + " >> Registros exitosos");
+      console.log(this.error + " >> Registros no existentes en usuarios");
+    }
   }
 
-  nuevoDato(id:string, effectiveDateTime:string, subject:string, key:string, value:number, unit: string, medition_type:number): meditionsNewModel {
+  newMedition(id:string, effectiveDateTime:string, subject:string, key:string, value:number, unit: string, medition_type:number): meditionsNewModel {
     return {
       _id: id,
       effectiveDateTime: effectiveDateTime,
@@ -121,15 +167,30 @@ export class HomePage {
       },
       valueQuantity: {
         value: value,
-        unit: this.obtenerMedida(key, unit)
+        unit: this.GetMeasure(key, unit)
       },
       deviceName: {
-        name: this.obtenerDisp(medition_type)
+        name: this.getDevice(medition_type)
       }
     };
   }
 
-  obtenerMedida(key: string, unit: string): string {
+  newTarjet(id:string, effectiveDateTime:string, subject:string, key:string, value:number, unit: string): tarjetNewModel {
+    return {
+      _id: id,
+      effectiveDateTime: effectiveDateTime,
+      subject: subject,
+      code: {
+        text: key,
+      },
+      valueQuantity: {
+        value: value,
+        unit: unit
+      }
+    };
+  }
+
+  GetMeasure(key: string, unit: string): string {
     let meditions = "";
 
     switch(key) {
@@ -188,7 +249,7 @@ export class HomePage {
     return meditions;
   }
 
-  obtenerDisp(medition_type: number): string {
+  getDevice(medition_type: number): string {
     let device = "";
 
     switch(medition_type) {
