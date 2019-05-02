@@ -21,7 +21,7 @@ export class HomePage {
   error: number = 0;
 
   constructor(private fire: AngularFirestore /*, public file: File*/) {
-
+    
   }
 
   descargar(contenido: string, nombre: string) {
@@ -58,8 +58,6 @@ export class HomePage {
           var strObj = JSON.stringify(data);
           var objJson = JSON.parse(strObj);
 
-          //Descargar el archivo con los datos completos de una coleccion
-          this.descargar(JSON.stringify(data), coleccion.replace(/\//g, ""));
           this.array = data;
           resolve(data);
         }
@@ -109,6 +107,7 @@ export class HomePage {
       }
     }
 
+    this.descargar(JSON.stringify(this.array), "Users");
     console.log("FINALZO USERS");
     console.log(this.cont + " >> Registros exitosos");
     console.log(this.error + " >> Registros no contienen medida o unidad de medida");
@@ -151,6 +150,7 @@ export class HomePage {
 
     console.log("CONT: " + this.cont);
     if ((this.cont + this.error) == this.array.length) {
+      this.descargar(JSON.stringify(this.array), "Meditions");
       console.log("FINALIZO MEDITIONS");
       console.log(this.cont + " >> Registros exitosos");
       console.log(this.error + " >> Registros no existentes en usuarios");
