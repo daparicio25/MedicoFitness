@@ -21,7 +21,7 @@ export class HomePage {
   error: number = 0;
 
   constructor(private fire: AngularFirestore /*, public file: File*/) {
-    
+
   }
 
   descargar(contenido: string, nombre: string) {
@@ -68,14 +68,13 @@ export class HomePage {
   }
 
   iterar() {
-    let item;
-    let unit = "";
-
     console.log("Total de reg Meditions: " + this.array.length);
 
     for (var i=0; i<this.array.length; i++)
     {
-      item = this.array[i];
+      let item = this.array[i];
+
+      //console.log(item);
 
       this.getUnit(item["user_uid"])
       .then(respuesta => this.spliceData(item, respuesta))
@@ -84,18 +83,16 @@ export class HomePage {
   }
 
   iterar2() {
-    let item;
-    let unit = "";
-
     console.log("Total de reg Users: " + this.array.length);
 
     for (var i=0; i<this.array.length; i++)
     {
-      item = this.array[i];
+      let item = this.array[i];
 
       if (item["weight"] !== undefined && item["weight_unity"] !== undefined) {
         this.cont++;
         console.log(this.cont);
+        console.log(item)
 
         let idDoc = this.fire.createId();
         this.data2 = this.newTarjet(idDoc, item["created_at"], item["uid"], "weight", item["weight"], item["weight_unity"])
@@ -134,17 +131,19 @@ export class HomePage {
     return promise;
   }
 
-  spliceData(item, unit) {
+  spliceData(item2, unit) {
     this.cont++;
 
-    for (var key in item) {
+    console.log("<< " + item2["user_uid"]);
+
+    for (var key in item2) {
       var arre = ["uid", "medition_type", "created_at", "user_uid"];
-      if (arre.indexOf(key) == -1 && item[key] != null && item[key] != "0" && item[key] != "0.00") {
+      if (arre.indexOf(key) == -1 && item2[key] != null && item2[key] != "0" && item2[key] != "0.00") {
         //console.log(key + " --> " + item[key]);
         let idDoc = this.fire.createId();
-        this.data = this.newMedition(idDoc, item["created_at"], item["user_uid"], key, item[key], unit, item["medition_type"])
+        this.data = this.newMedition(idDoc, item2["created_at"], item2["user_uid"], key, item2[key], unit, item2["medition_type"])
 
-        this.fire.doc("/meditions/" + idDoc).set(this.data);
+        //this.fire.doc("/meditionsNewModel/" + idDoc).set(this.data);
       }
     }
 
